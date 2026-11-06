@@ -100,6 +100,7 @@ tr:hover td{background:#202020}
       <button id="menuBtn">☰</button>
     </div>
     <nav class="nav">
+      <div class="nav-item" data-pag="home"><span class="ico">🏠</span> Início</div>
       <div class="nav-item" data-pag="dashboard"><span class="ico">📊</span> Dashboard</div>
       <div class="nav-item" data-pag="gasto"><span class="ico">💸</span> Incluir Gasto</div>
       <div class="nav-item" data-pag="recebimento"><span class="ico">💰</span> Incluir Recebimento</div>
@@ -125,7 +126,7 @@ tr:hover td{background:#202020}
     <img id="logoFundo" src="" alt="" style="display:none">
     <!-- DASHBOARD -->
     <section class="pagina" id="pag-dashboard">
-      <div class="topo"><h1>📊 Dashboard</h1><div style="display:flex;gap:8px"><button class="sair" onclick="recarregarManual()" title="Atualizar dados">🔄</button><button class="sair" onclick="sair('dashboard')">Sair</button></div></div>
+      <div class="topo"><h1>📊 Dashboard</h1><div style="display:flex;gap:8px"><button class="sair" onclick="recarregarManual()" title="Atualizar dados">🔄</button><button class="sair" onclick="logout()">Sair</button></div></div>
       <div class="card" style="padding:12px 14px">
         <div class="filtros">
           <div><label>Período</label>
@@ -156,7 +157,7 @@ tr:hover td{background:#202020}
 
     <!-- INCLUIR GASTO -->
     <section class="pagina" id="pag-gasto">
-      <div class="topo"><h1>💸 Incluir Gasto</h1><div style="display:flex;gap:8px"><button class="sair" onclick="recarregarManual()" title="Atualizar dados">🔄</button><button class="sair" onclick="sair('gasto')">Sair</button></div></div>
+      <div class="topo"><h1>💸 Incluir Gasto</h1><div style="display:flex;gap:8px"><button class="sair" onclick="recarregarManual()" title="Atualizar dados">🔄</button><button class="sair" onclick="logout()">Sair</button></div></div>
       <div class="card">
         <div class="filtros">
           <div style="min-width:160px"><label>Data *</label><input type="date" id="gData"></div>
@@ -183,7 +184,7 @@ tr:hover td{background:#202020}
 
     <!-- INCLUIR RECEBIMENTO -->
     <section class="pagina" id="pag-recebimento">
-      <div class="topo"><h1>💰 Incluir Recebimento</h1><div style="display:flex;gap:8px"><button class="sair" onclick="recarregarManual()" title="Atualizar dados">🔄</button><button class="sair" onclick="sair('recebimento')">Sair</button></div></div>
+      <div class="topo"><h1>💰 Incluir Recebimento</h1><div style="display:flex;gap:8px"><button class="sair" onclick="recarregarManual()" title="Atualizar dados">🔄</button><button class="sair" onclick="logout()">Sair</button></div></div>
       <div class="card">
         <div class="filtros">
           <div style="min-width:160px"><label>Data *</label><input type="date" id="rData"></div>
@@ -204,7 +205,7 @@ tr:hover td{background:#202020}
 
     <!-- GERENCIAR CADASTROS -->
     <section class="pagina" id="pag-cadastro">
-      <div class="topo"><h1>⚙️ Gerenciar Cadastros</h1><div style="display:flex;gap:8px"><button class="sair" onclick="recarregarManual()" title="Atualizar dados">🔄</button><button class="sair" onclick="sair('cadastro')">Sair</button></div></div>
+      <div class="topo"><h1>⚙️ Gerenciar Cadastros</h1><div style="display:flex;gap:8px"><button class="sair" onclick="recarregarManual()" title="Atualizar dados">🔄</button><button class="sair" onclick="logout()">Sair</button></div></div>
       <div class="filtros" style="margin-bottom:14px">
         <button class="btn min" id="tabTG" onclick="mostrarCad('tg')">Tipo de Gasto</button>
         <button class="btn sec min" id="tabTR" onclick="mostrarCad('tr')">Tipo de Recebimento</button>
@@ -263,21 +264,20 @@ tr:hover td{background:#202020}
   </main>
 </div>
 
-<div class="modal-bg" id="modalBg" style="display:none">
+<div class="modal-bg" id="loginBg" style="display:none">
   <div class="modal">
     <div class="lock">🔐</div>
-    <h2 id="mTitulo">Acesso restrito</h2>
-    <p id="mSub">Digite a senha desta área</p>
-    <input type="password" id="mSenha" inputmode="numeric" placeholder="••••••" maxlength="6">
-    <div class="erro" id="mErro"></div>
-    <button class="btn" style="width:100%" onclick="confirmarSenha()">Entrar</button>
-    <div style="margin-top:10px"><button class="sair" onclick="fecharModal()">Cancelar</button></div>
+    <h2>Transportadora Casagrande</h2>
+    <p>Entre com seu usuário e senha</p>
+    <input type="text" id="lUsuario" placeholder="USUÁRIO" autocapitalize="characters" autocomplete="username" style="text-transform:uppercase">
+    <input type="password" id="lSenha" placeholder="SENHA" autocomplete="current-password" style="margin-top:8px">
+    <div class="erro" id="lErro"></div>
+    <button class="btn" style="width:100%" onclick="fazerLogin()">Entrar</button>
   </div>
 </div>
 <div id="toast"></div>
 <script>
-const CFG={API:localStorage.getItem('tc_api')||'',SENHAS:{dashboard:'f6fd4269111fb57269e71ba7ec64df5ecff4763e3a7aa34d6eae633d21ce78be',gasto:'3628301e156c9d6a4a4f52fbed142f3bf9c29259b952843282f43e8ee6ad57c4',recebimento:'e2a90b18cdc543c2cf6ac6536500683f19c57ec156a8c009118175d870b02175',cadastro:'b2a40dfc1ce5bc5aec217b14c5878b260f7c0fe3b511b9615197833c32b046a2'},NOMES:{dashboard:'Dashboard',gasto:'Incluir Gasto',recebimento:'Incluir Recebimento',cadastro:'Gerenciar Cadastros'}};
-async function sha256(t){const b=new TextEncoder().encode(t);const h=await crypto.subtle.digest('SHA-256',b);return[...new Uint8Array(h)].map(x=>x.toString(16).padStart(2,'0')).join('')}
+const CFG={API:localStorage.getItem('tc_api')||''};
 function toast(m,e){const t=document.getElementById('toast');t.textContent=m;t.className=e?'erro':'';t.style.display='block';setTimeout(()=>t.style.display='none',3500)}
 function hoje(){const d=new Date();d.setMinutes(d.getMinutes()-d.getTimezoneOffset());return d.toISOString().slice(0,10)}
 function fmt(v){return(v==null||isNaN(v))?'—':v.toLocaleString('pt-BR',{style:'currency',currency:'BRL'})}
@@ -286,10 +286,12 @@ function dataBR(d){if(!d)return'';const p=String(d).slice(0,10).split('-');retur
 function upper(s){return String(s||'').trim().toUpperCase()}
 function num(v){const n=parseFloat(v);return isNaN(n)?0:n}
 let DADOS={gastos:[],recs:[],tiposG:[],tiposR:[],veics:[],mots:[]};
-let ABERTO={},FOTO_B64=null,ENVIANDO=false;
+let FOTO_B64=null,ENVIANDO=false;
 async function api(acao,payload){
   if(!CFG.API)throw new Error('Backend não configurado: peça ao administrador para colar a URL do Apps Script (botão ⚙️ no topo).');
-  const r=await fetch(CFG.API,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(Object.assign({acao:acao},payload))});
+  let body=Object.assign({acao:acao},payload);
+  if(acao!=='login'&&SESSAO){body.usuario=SESSAO.usuario;body.senha=SESSAO.senha}
+  const r=await fetch(CFG.API,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(body)});
   const j=await r.json();
   if(j.ok===false)throw new Error(j.erro||'Erro no servidor');
   return j;
@@ -306,9 +308,14 @@ async function carregarTudo(){
       document.getElementById('homeNome').style.display='none';
     }
     document.getElementById('cfgStatus').textContent='✅ Conectado — '+DADOS.gastos.length+' gastos · '+DADOS.recs.length+' recebimentos';
-  }catch(e){document.getElementById('cfgStatus').textContent='⚠️ '+e.message}
+  }catch(e){
+    if(/login|Sess/i.test(e.message)){SESSAO=null;sessionStorage.removeItem('tc_sessao');mostrarLogin()}
+    else document.getElementById('cfgStatus').textContent='⚠️ '+e.message;
+  }
 }
-/* ---------- SENHAS ---------- */
+/* ---------- LOGIN / SESSÃO ---------- */
+let SESSAO=null;
+try{SESSAO=JSON.parse(sessionStorage.getItem('tc_sessao')||'null')}catch(_){SESSAO=null}
 document.querySelectorAll('.nav-item').forEach(n=>n.addEventListener('click',()=>{fecharMenu();abrirPagina(n.dataset.pag)}));
 document.querySelectorAll('.home-btn').forEach(b=>b.addEventListener('click',()=>abrirPagina(b.dataset.pag)));
 document.getElementById('menuBtn').addEventListener('click',()=>document.querySelector('.sidebar').classList.toggle('aberto'));
@@ -325,31 +332,55 @@ function configAPI(){
   const u=prompt('Cole aqui a URL do Apps Script (termina em /exec):',CFG.API||'');
   if(u&&u.trim()){localStorage.setItem('tc_api',u.trim());CFG.API=u.trim();carregarTudo().then(()=>toast('Conectado!'))}
 }
+function mostrarLogin(){
+  document.getElementById('loginBg').style.display='flex';
+  document.getElementById('lErro').textContent='';
+  document.getElementById('lUsuario').value=SESSAO?SESSAO.usuario:'';
+  document.getElementById('lSenha').value='';
+  setTimeout(()=>document.getElementById(SESSAO?'lSenha':'lUsuario').focus(),80);
+}
+async function fazerLogin(){
+  const u=document.getElementById('lUsuario').value.trim().toUpperCase();
+  const s=document.getElementById('lSenha').value;
+  if(!u||!s){document.getElementById('lErro').textContent='Preencha usuário e senha';return}
+  try{
+    const j=await api('login',{usuario:u,senha:s});
+    SESSAO={usuario:j.usuario,senha:s,perms:j.perms||[]};
+    sessionStorage.setItem('tc_sessao',JSON.stringify(SESSAO));
+    document.getElementById('loginBg').style.display='none';
+    aplicarPermissoes();
+    toast('Bem-vindo, '+j.usuario+'!');
+    carregarTudo();
+  }catch(e){document.getElementById('lErro').textContent=e.message}
+}
+document.getElementById('lSenha').addEventListener('keydown',e=>{if(e.key==='Enter')fazerLogin()});
+function logout(){
+  SESSAO=null;sessionStorage.removeItem('tc_sessao');
+  ativar(null);
+  mostrarLogin();
+}
+function temPerm(p){return SESSAO&&(SESSAO.perms||[]).includes(p)}
+function aplicarPermissoes(){
+  const mapa={dashboard:'DASHBOARD',gasto:'GASTO',recebimento:'RECEBIMENTO',cadastro:'CADASTRO'};
+  document.querySelectorAll('.nav-item[data-pag]').forEach(n=>{
+    const p=n.dataset.pag;
+    n.style.display=(p==='home'||temPerm(mapa[p]))?'':'none';
+  });
+  document.querySelectorAll('.home-btn').forEach(b=>{
+    b.style.display=temPerm(mapa[b.dataset.pag])?'':'none';
+  });
+}
 function abrirPagina(p){
-  if(ABERTO[p]){ativar(p);return}
-  const bg=document.getElementById('modalBg');
-  bg.dataset.pag=p;
-  document.getElementById('mTitulo').textContent=CFG.NOMES[p];
-  document.getElementById('mSub').textContent='Digite a senha da área '+CFG.NOMES[p];
-  document.getElementById('mErro').textContent='';
-  document.getElementById('mSenha').value='';
-  bg.style.display='flex';
-  setTimeout(()=>document.getElementById('mSenha').focus(),50);
+  if(p==='home'){ativar(null);return}
+  const mapa={dashboard:'DASHBOARD',gasto:'GASTO',recebimento:'RECEBIMENTO',cadastro:'CADASTRO'};
+  if(!temPerm(mapa[p])){toast('Você não tem permissão para esta área',true);return}
+  ativar(p);
 }
-async function confirmarSenha(){
-  const p=document.getElementById('modalBg').dataset.pag;
-  const h=await sha256(document.getElementById('mSenha').value);
-  if(h===CFG.SENHAS[p]){ABERTO[p]=true;fecharModal();ativar(p)}
-  else{document.getElementById('mErro').textContent='Senha incorreta';document.getElementById('mSenha').value=''}
-}
-function fecharModal(){document.getElementById('modalBg').style.display='none'}
-document.getElementById('mSenha').addEventListener('keydown',e=>{if(e.key==='Enter')confirmarSenha()});
-function sair(p){ABERTO[p]=false;ativar(null)}
 function ativar(p){
   fecharMenu();
   document.getElementById('home-card').style.display=p?'none':'block';
   document.querySelectorAll('.pagina').forEach(x=>x.classList.remove('ativa'));
-  document.querySelectorAll('.nav-item').forEach(x=>x.classList.remove('ativo'));
+  document.querySelectorAll('.nav-item').forEach(x=>x.classList.toggle('ativo',x.dataset.pag===(p||'home')));
   if(!p)return;
   document.getElementById('pag-'+p).classList.add('ativa');
   document.querySelector('.nav-item[data-pag="'+p+'"]').classList.add('ativo');
@@ -493,7 +524,7 @@ function enviarGasto(){
   const ex=validarExtras('gExtras');if(ex===null)return;
   ENVIANDO=true;document.getElementById('btnGasto').disabled=true;
   lerFoto(foto=>{
-    api('addGasto',{data:data,tipo:tipo,valor:valor,placa:placa,motorista:mot,extras:ex,obs:document.getElementById('gObs').value.trim(),foto:foto}).then(()=>{
+    api('addGasto',{data:data,tipo:tipo,valor:valor,placa:placa,motorista:mot,extras:ex,obs:document.getElementById('gObs').value.trim(),foto:foto,usuario:SESSAO.usuario,senha:SESSAO.senha}).then(()=>{
       toast('✅ Gasto lançado!');ENVIANDO=false;document.getElementById('btnGasto').disabled=false;
       document.getElementById('gValor').value='';document.getElementById('gObs').value='';document.getElementById('gFotoCam').value='';document.getElementById('gFotoGal').value='';document.getElementById('gFotoPrev').innerHTML='';
       document.querySelectorAll('#gExtras input').forEach(i=>i.value='');
@@ -511,7 +542,7 @@ function enviarRecebimento(){
   if(!tipo||!valor||!placa||!mot)return toast('Preencha tipo, valor, placa e motorista',true);
   const ex=validarExtras('rExtras');if(ex===null)return;
   ENVIANDO=true;document.getElementById('btnRec').disabled=true;
-  api('addRec',{data:data,tipo:tipo,valor:valor,placa:placa,motorista:mot,extras:ex,obs:document.getElementById('rObs').value.trim()}).then(()=>{
+  api('addRec',{data:data,tipo:tipo,valor:valor,placa:placa,motorista:mot,extras:ex,obs:document.getElementById('rObs').value.trim(),usuario:SESSAO.usuario,senha:SESSAO.senha}).then(()=>{
     toast('✅ Recebimento lançado!');ENVIANDO=false;document.getElementById('btnRec').disabled=false;
     document.getElementById('rValor').value='';document.getElementById('rObs').value='';
     document.querySelectorAll('#rExtras input').forEach(i=>i.value='');
@@ -606,11 +637,11 @@ function renderPorMes(){
   }).join('');
 }
 function renderUltimos(){
-  const todos=DADOS.gastos.map(g=>({t:'G',data:g.data,tipo:g.tipo,val:-num(g.valor),placa:g.placa,mot:g.motorista}))
-    .concat(DADOS.recs.map(r=>({t:'R',data:r.data,tipo:r.tipo,val:num(r.valor),placa:r.placa,mot:r.motorista})));
+  const todos=DADOS.gastos.map(g=>({t:'G',data:g.data,tipo:g.tipo,val:-num(g.valor),placa:g.placa,mot:g.motorista,quem:g.lancadoPor}))
+    .concat(DADOS.recs.map(r=>({t:'R',data:r.data,tipo:r.tipo,val:num(r.valor),placa:r.placa,mot:r.motorista,quem:r.lancadoPor})));
   todos.sort((a,b)=>String(b.data).localeCompare(String(a.data)));
   const el=document.getElementById('ultimos');
-  el.innerHTML=!todos.length?'<div class="vazio">Nada lançado ainda</div>':'<table><tr><th>Data</th><th>Tipo</th><th>Placa</th><th>Motorista</th><th class="direita">Valor</th></tr>'+todos.slice(0,12).map(x=>'<tr><td>'+dataBR(x.data)+'</td><td>'+(x.t==='G'?'💸 ':'💰 ')+esc(x.tipo)+'</td><td>'+esc(upper(x.placa))+'</td><td>'+esc(x.mot)+'</td><td class="direita" style="color:'+(x.val>=0?'var(--verde)':'var(--vermelho)')+'">'+fmt(x.val)+'</td></tr>').join('')+'</table>';
+  el.innerHTML=!todos.length?'<div class="vazio">Nada lançado ainda</div>':'<table><tr><th>Data</th><th>Tipo</th><th>Placa</th><th>Motorista</th><th>Por</th><th class="direita">Valor</th></tr>'+todos.slice(0,12).map(x=>'<tr><td>'+dataBR(x.data)+'</td><td>'+(x.t==='G'?'💸 ':'💰 ')+esc(x.tipo)+'</td><td>'+esc(upper(x.placa))+'</td><td>'+esc(x.mot)+'</td><td style="color:#ffd400">'+esc(x.quem||'—')+'</td><td class="direita" style="color:'+(x.val>=0?'var(--verde)':'var(--vermelho)')+'">'+fmt(x.val)+'</td></tr>').join('')+'</table>';
 }
 /* ---------- INIT ---------- */
 function recarregar(){carregarTudo().then(()=>{renderCadastro();if(document.querySelector('.pagina.ativa')){const p=document.querySelector('.pagina.ativa').id.replace('pag-','');if(p==='dashboard')renderDash();if(p==='gasto')renderGasto();if(p==='recebimento')renderReceb()}})}
@@ -627,6 +658,7 @@ document.addEventListener('visibilitychange',()=>{
 window.addEventListener('load',async()=>{
   const q=new URLSearchParams(location.search).get('api');
   if(q){localStorage.setItem('tc_api',q);CFG.API=q;history.replaceState(null,'',location.pathname)}
+  if(SESSAO)aplicarPermissoes();else mostrarLogin();
   await carregarTudo();
   if(!CFG.API&&!sessionStorage.getItem('tc_perguntou')){
     sessionStorage.setItem('tc_perguntou','1');
