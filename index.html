@@ -57,7 +57,7 @@ tr:hover td{background:#202020}
 .rank-item .val{font-weight:700;white-space:nowrap}
 .pos-neg{font-size:12px;margin-left:8px}
 #pag-dashboard{position:relative}
-#logoFundo{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);max-width:min(72vw,760px);max-height:72vh;opacity:.06;pointer-events:none;z-index:50}
+#logoFundo{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);max-width:min(72vw,760px);max-height:72vh;opacity:.15;filter:brightness(0);pointer-events:none;z-index:50}
 .modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.82);display:flex;align-items:center;justify-content:center;z-index:100}
 .modal{background:var(--bg2);border:1px solid var(--line);border-radius:16px;padding:28px;width:min(360px,92vw);text-align:center}
 .modal .lock{font-size:34px}
@@ -148,7 +148,10 @@ tr:hover td{background:#202020}
           <div style="min-width:200px"><label>Motorista *</label><select id="gMot"><option value="">Carregando…</option></select></div>
         </div>
         <label>Foto do comprovante</label>
-        <input type="file" id="gFoto" accept="image/*" capture="environment">
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <label class="btn sec min" style="cursor:pointer;display:inline-flex;align-items:center">📷 Tirar foto agora<input type="file" id="gFotoCam" accept="image/*" capture="environment" style="display:none"></label>
+          <label class="btn sec min" style="cursor:pointer;display:inline-flex;align-items:center">🖼️ Escolher da galeria<input type="file" id="gFotoGal" accept="image/*" style="display:none"></label>
+        </div>
         <div id="gFotoPrev" style="margin-top:8px"></div>
         <label>Observação (opcional)</label>
         <input type="text" id="gObs" placeholder="Informação extra">
@@ -367,7 +370,8 @@ function renderListaMO(){renderListaTG()}
 function renderGasto(){
   document.getElementById('gData').value=hoje();
   document.getElementById('gTipo').onchange=gTipoChange;
-  document.getElementById('gFoto').onchange=prevFoto;
+  document.getElementById('gFotoCam').onchange=prevFoto;
+  document.getElementById('gFotoGal').onchange=prevFoto;
   fillSelect('gTipo',DADOS.tiposG.map(t=>t.nome),'Selecione o tipo');
   fillSelect('gPlaca',DADOS.veics.map(v=>v.placa),'Selecione a placa');
   fillSelect('gMot',DADOS.mots.map(m=>m.nome),'Selecione o motorista');
@@ -392,8 +396,9 @@ function renderExtras(container,tipoSel){
   const campos=lista?lista.campos:[];
   c.innerHTML=campos.map(l=>'<div style="min-width:180px;flex:1"><label>'+esc(l)+' *</label><input type="text" data-extra="'+esc(l)+'"></div>').join('');
 }
+function fotoFile(){return document.getElementById('gFotoCam').files[0]||document.getElementById('gFotoGal').files[0]||null}
 function prevFoto(){
-  const f=document.getElementById('gFoto').files[0];
+  const f=fotoFile();
   document.getElementById('gFotoPrev').innerHTML=f?'<img src="'+URL.createObjectURL(f)+'" style="max-width:120px;border-radius:8px;border:1px solid var(--line)">':'';
 }
 function gTipoChange(){renderExtras('gExtras',document.getElementById('gTipo').value)}
@@ -410,7 +415,7 @@ function validarExtras(container){
   return ex;
 }
 function lerFoto(cb){
-  const f=document.getElementById('gFoto').files[0];
+  const f=fotoFile();
   if(!f)return cb(null);
   const r=new FileReader();
   r.onload=()=>{
@@ -440,7 +445,7 @@ function enviarGasto(){
   lerFoto(foto=>{
     api('addGasto',{data:data,tipo:tipo,valor:valor,placa:placa,motorista:mot,extras:ex,obs:document.getElementById('gObs').value.trim(),foto:foto}).then(()=>{
       toast('✅ Gasto lançado!');ENVIANDO=false;document.getElementById('btnGasto').disabled=false;
-      document.getElementById('gValor').value='';document.getElementById('gObs').value='';document.getElementById('gFoto').value='';document.getElementById('gFotoPrev').innerHTML='';
+      document.getElementById('gValor').value='';document.getElementById('gObs').value='';document.getElementById('gFotoCam').value='';document.getElementById('gFotoGal').value='';document.getElementById('gFotoPrev').innerHTML='';
       document.querySelectorAll('#gExtras input').forEach(i=>i.value='');
       recarregar();
     }).catch(e=>{toast(e.message,true);ENVIANDO=false;document.getElementById('btnGasto').disabled=false});
