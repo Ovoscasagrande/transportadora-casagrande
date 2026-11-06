@@ -425,7 +425,9 @@ function renderReceb(){
 }
 function fillSelect(id,items,ph){
   const el=document.getElementById(id);
+  const atual=el.value;
   el.innerHTML='<option value="">'+ph+'</option>'+items.map(i=>'<option>'+esc(i)+'</option>').join('');
+  if(atual&&items.includes(atual))el.value=atual;
 }
 function renderExtras(container,tipoSel){
   const c=document.getElementById(container);
