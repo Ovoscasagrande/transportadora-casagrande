@@ -125,7 +125,7 @@ tr:hover td{background:#202020}
     <img id="logoFundo" src="" alt="" style="display:none">
     <!-- DASHBOARD -->
     <section class="pagina" id="pag-dashboard">
-      <div class="topo"><h1>📊 Dashboard</h1><button class="sair" onclick="sair('dashboard')">Sair</button></div>
+      <div class="topo"><h1>📊 Dashboard</h1><div style="display:flex;gap:8px"><button class="sair" onclick="recarregarManual()" title="Atualizar dados">🔄</button><button class="sair" onclick="sair('dashboard')">Sair</button></div></div>
       <div class="card" style="padding:12px 14px">
         <div class="filtros">
           <div><label>Período</label>
@@ -156,7 +156,7 @@ tr:hover td{background:#202020}
 
     <!-- INCLUIR GASTO -->
     <section class="pagina" id="pag-gasto">
-      <div class="topo"><h1>💸 Incluir Gasto</h1><button class="sair" onclick="sair('gasto')">Sair</button></div>
+      <div class="topo"><h1>💸 Incluir Gasto</h1><div style="display:flex;gap:8px"><button class="sair" onclick="recarregarManual()" title="Atualizar dados">🔄</button><button class="sair" onclick="sair('gasto')">Sair</button></div></div>
       <div class="card">
         <div class="filtros">
           <div style="min-width:160px"><label>Data *</label><input type="date" id="gData"></div>
@@ -183,7 +183,7 @@ tr:hover td{background:#202020}
 
     <!-- INCLUIR RECEBIMENTO -->
     <section class="pagina" id="pag-recebimento">
-      <div class="topo"><h1>💰 Incluir Recebimento</h1><button class="sair" onclick="sair('recebimento')">Sair</button></div>
+      <div class="topo"><h1>💰 Incluir Recebimento</h1><div style="display:flex;gap:8px"><button class="sair" onclick="recarregarManual()" title="Atualizar dados">🔄</button><button class="sair" onclick="sair('recebimento')">Sair</button></div></div>
       <div class="card">
         <div class="filtros">
           <div style="min-width:160px"><label>Data *</label><input type="date" id="rData"></div>
@@ -204,7 +204,7 @@ tr:hover td{background:#202020}
 
     <!-- GERENCIAR CADASTROS -->
     <section class="pagina" id="pag-cadastro">
-      <div class="topo"><h1>⚙️ Gerenciar Cadastros</h1><button class="sair" onclick="sair('cadastro')">Sair</button></div>
+      <div class="topo"><h1>⚙️ Gerenciar Cadastros</h1><div style="display:flex;gap:8px"><button class="sair" onclick="recarregarManual()" title="Atualizar dados">🔄</button><button class="sair" onclick="sair('cadastro')">Sair</button></div></div>
       <div class="filtros" style="margin-bottom:14px">
         <button class="btn min" id="tabTG" onclick="mostrarCad('tg')">Tipo de Gasto</button>
         <button class="btn sec min" id="tabTR" onclick="mostrarCad('tr')">Tipo de Recebimento</button>
@@ -313,6 +313,14 @@ document.querySelectorAll('.nav-item').forEach(n=>n.addEventListener('click',()=
 document.querySelectorAll('.home-btn').forEach(b=>b.addEventListener('click',()=>abrirPagina(b.dataset.pag)));
 document.getElementById('menuBtn').addEventListener('click',()=>document.querySelector('.sidebar').classList.toggle('aberto'));
 function fecharMenu(){document.querySelector('.sidebar').classList.remove('aberto')}
+function recarregarManual(){
+  toast('Atualizando dados…');
+  carregarTudo().then(()=>{renderPagina(paginaAtual());toast('✅ Dados atualizados')}).catch(e=>toast('Erro: '+e.message,true));
+}
+function paginaAtual(){
+  const p=document.querySelector('.pagina.ativa');
+  return p?p.id.replace('pag-',''):'';
+}
 function configAPI(){
   const u=prompt('Cole aqui a URL do Apps Script (termina em /exec):',CFG.API||'');
   if(u&&u.trim()){localStorage.setItem('tc_api',u.trim());CFG.API=u.trim();carregarTudo().then(()=>toast('Conectado!'))}
@@ -407,6 +415,7 @@ function renderListaMO(){renderListaTG()}
 /* ---------- FORMULÁRIOS ---------- */
 function renderGasto(){
   document.getElementById('gData').value=hoje();
+  if(!CFG.API)toast('Sem conexão: toque em ⚙️ Configurar conexão na tela inicial',true);
   document.getElementById('gTipo').onchange=gTipoChange;
   document.getElementById('gFotoCam').onchange=prevFoto;
   document.getElementById('gFotoGal').onchange=prevFoto;
@@ -417,6 +426,7 @@ function renderGasto(){
 }
 function renderReceb(){
   document.getElementById('rData').value=hoje();
+  if(!CFG.API)toast('Sem conexão: toque em ⚙️ Configurar conexão na tela inicial',true);
   document.getElementById('rTipo').onchange=rTipoChange;
   fillSelect('rTipo',DADOS.tiposR.map(t=>t.nome),'Selecione o tipo');
   fillSelect('rPlaca',DADOS.veics.map(v=>v.placa),'Selecione a placa');
@@ -618,6 +628,10 @@ window.addEventListener('load',async()=>{
   const q=new URLSearchParams(location.search).get('api');
   if(q){localStorage.setItem('tc_api',q);CFG.API=q;history.replaceState(null,'',location.pathname)}
   await carregarTudo();
+  if(!CFG.API&&!sessionStorage.getItem('tc_perguntou')){
+    sessionStorage.setItem('tc_perguntou','1');
+    setTimeout(()=>{if(!CFG.API)configAPI()},900);
+  }
   ajustarFiltros();
   document.getElementById('fMes').value=hoje().slice(0,7);
   document.getElementById('fDia').value=hoje();
