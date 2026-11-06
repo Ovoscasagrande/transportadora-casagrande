@@ -274,6 +274,7 @@ tr:hover td{background:#202020}
     <input type="password" id="lSenha" placeholder="SENHA" autocomplete="current-password" style="margin-top:8px">
     <div class="erro" id="lErro"></div>
     <button class="btn" style="width:100%" onclick="fazerLogin()">Entrar</button>
+    <div style="margin-top:10px"><button class="sair" onclick="configAPI()">⚙️ Conexão</button></div>
   </div>
 </div>
 <div id="toast"></div>
@@ -356,7 +357,11 @@ async function fazerLogin(){
     aplicarPermissoes();
     toast('Bem-vindo, '+j.usuario+'!');
     carregarTudo();
-  }catch(e){document.getElementById('lErro').textContent=e.message}
+  }catch(e){
+    document.getElementById('lErro').textContent=/Ação desconhecida/i.test(e.message)
+      ?'Conexão desatualizada: toque em ⚙️ Conexão e cole a URL nova do sistema'
+      :e.message;
+  }
 }
 document.getElementById('lSenha').addEventListener('keydown',e=>{if(e.key==='Enter')fazerLogin()});
 function logout(){
