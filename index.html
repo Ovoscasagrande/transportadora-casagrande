@@ -150,6 +150,7 @@ tr:hover td{background:#202020}
       <div class="card"><h3>💸 Caminhão que mais GASTA</h3><div id="rankGasta"></div></div>
       <div class="card"><h3>⚖️ Resultado por caminhão (recebido − gasto)</h3><div id="rankLucro"></div><div style="font-size:11.5px;color:#666;margin-top:8px">Verde = lucro · Vermelho = prejuízo</div></div>
       <div class="card"><h3>⛽ Diesel por caminhão</h3><div id="porDiesel"></div><div style="font-size:11.5px;color:#666;margin-top:8px">Aparece quando o tipo de gasto DIESEL tiver os campos LITROS e KM preenchidos</div></div>
+      <div class="card"><h3>📏 Média km/L por caminhão</h3><div id="porKmL"></div><div style="font-size:11.5px;color:#666;margin-top:8px">(KM atual − KM do abastecimento anterior) ÷ litros. Calculado sobre todo o histórico.</div></div>
       <div class="card"><h3>💸 Gastos por tipo</h3><div id="porTipo"></div></div>
       <div class="card"><h3>📅 Evolução por mês (12 meses)</h3><div id="porMes"></div></div>
       <div class="card"><h3>🧾 Últimos lançamentos</h3><div id="ultimos"></div></div>
@@ -296,17 +297,21 @@ async function api(acao,payload){
   if(j.ok===false)throw new Error(j.erro||'Erro no servidor');
   return j;
 }
+function aplicarLogo(l){
+  if(!l)return;
+  document.getElementById('logoImg').src=l;document.getElementById('logoImg').style.display='inline-block';
+  document.getElementById('logoFundo').src=l;document.getElementById('logoFundo').style.display='block';
+  document.getElementById('logoHome').src=l;document.getElementById('logoHome').style.display='block';
+  document.getElementById('homeNome').style.display='none';
+}
 async function carregarTudo(){
   if(!CFG.API){document.getElementById('cfgStatus').textContent='⚠️ Backend não configurado — peça a URL ao administrador (⚙️).';return}
   try{
-    const j=await api('getAll',{});
+    const semLogo=!!localStorage.getItem('tc_logo');
+    const j=await api('getAll',semLogo?{semLogo:true}:{});
     DADOS.gastos=j.gastos||[];DADOS.recs=j.recs||[];DADOS.tiposG=j.tiposG||[];DADOS.tiposR=j.tiposR||[];DADOS.veics=j.veics||[];DADOS.mots=j.mots||[];
-    if(j.logo){
-      document.getElementById('logoImg').src=j.logo;document.getElementById('logoImg').style.display='inline-block';
-      document.getElementById('logoFundo').src=j.logo;document.getElementById('logoFundo').style.display='block';
-      document.getElementById('logoHome').src=j.logo;document.getElementById('logoHome').style.display='block';
-      document.getElementById('homeNome').style.display='none';
-    }
+    if(j.logo){localStorage.setItem('tc_logo',j.logo);aplicarLogo(j.logo)}
+    else if(semLogo){aplicarLogo(localStorage.getItem('tc_logo'))}
     document.getElementById('cfgStatus').textContent='✅ Conectado — '+DADOS.gastos.length+' gastos · '+DADOS.recs.length+' recebimentos';
   }catch(e){
     if(/login|Sess/i.test(e.message)){SESSAO=null;sessionStorage.removeItem('tc_sessao');mostrarLogin()}
@@ -513,6 +518,7 @@ function lerFoto(cb){
   };
   r.readAsDataURL(f);
 }
+function extrasObj(ex){const o={};(ex||[]).forEach(e=>{if(e.label)o[e.label]=e.valor});return o}
 function enviarGasto(){
   if(ENVIANDO)return;
   const data=document.getElementById('gData').value||hoje();
@@ -521,14 +527,16 @@ function enviarGasto(){
   const placa=document.getElementById('gPlaca').value;
   const mot=document.getElementById('gMot').value;
   if(!tipo||!valor||!placa||!mot)return toast('Preencha tipo, valor, placa e motorista',true);
+  if(!fotoFile())return toast('A foto do comprovante é obrigatória',true);
   const ex=validarExtras('gExtras');if(ex===null)return;
   ENVIANDO=true;document.getElementById('btnGasto').disabled=true;
   lerFoto(foto=>{
     api('addGasto',{data:data,tipo:tipo,valor:valor,placa:placa,motorista:mot,extras:ex,obs:document.getElementById('gObs').value.trim(),foto:foto,usuario:SESSAO.usuario,senha:SESSAO.senha}).then(()=>{
       toast('✅ Gasto lançado!');ENVIANDO=false;document.getElementById('btnGasto').disabled=false;
+      DADOS.gastos.unshift({data:data,tipo:tipo,valor:valor,placa:placa,motorista:mot,lancadoPor:SESSAO.usuario,registro:'',extras:extrasObj(ex),obs:document.getElementById('gObs').value.trim(),link:''});
       document.getElementById('gValor').value='';document.getElementById('gObs').value='';document.getElementById('gFotoCam').value='';document.getElementById('gFotoGal').value='';document.getElementById('gFotoPrev').innerHTML='';
       document.querySelectorAll('#gExtras input').forEach(i=>i.value='');
-      recarregar();
+      renderPagina(paginaAtual());
     }).catch(e=>{toast(e.message,true);ENVIANDO=false;document.getElementById('btnGasto').disabled=false});
   });
 }
@@ -544,9 +552,10 @@ function enviarRecebimento(){
   ENVIANDO=true;document.getElementById('btnRec').disabled=true;
   api('addRec',{data:data,tipo:tipo,valor:valor,placa:placa,motorista:mot,extras:ex,obs:document.getElementById('rObs').value.trim(),usuario:SESSAO.usuario,senha:SESSAO.senha}).then(()=>{
     toast('✅ Recebimento lançado!');ENVIANDO=false;document.getElementById('btnRec').disabled=false;
+    DADOS.recs.unshift({data:data,tipo:tipo,valor:valor,placa:placa,motorista:mot,lancadoPor:SESSAO.usuario,registro:'',extras:extrasObj(ex),obs:document.getElementById('rObs').value.trim()});
     document.getElementById('rValor').value='';document.getElementById('rObs').value='';
     document.querySelectorAll('#rExtras input').forEach(i=>i.value='');
-    recarregar();
+    renderPagina(paginaAtual());
   }).catch(e=>{toast('Erro: '+e.message,true);ENVIANDO=false;document.getElementById('btnRec').disabled=false});
 }
 /* ---------- DASHBOARD ---------- */
@@ -605,9 +614,32 @@ function renderDash(){
   gs.forEach(g=>{const p=upper(g.placa);mapa[p]=(mapa[p]||0)-num(g.valor)});
   rank('rankLucro',Object.keys(mapa).map(p=>({nome:veicLabel(p),val:mapa[p]})),fmt,x=>x.val>=0?'var(--verde)':'var(--vermelho)');
   renderDiesel(gs);
+  renderKmL();
   rank('porTipo',groupSum(gs,g=>upper(g.tipo),g=>num(g.valor)),fmt);
   renderPorMes();
   renderUltimos();
+}
+function regTs(s){const m=String(s).match(/(\d{2})\/(\d{2})\/(\d{4})\s+(\d{2}):(\d{2}):(\d{2})/);return m?new Date(+m[3],+m[2]-1,+m[1],+m[4],+m[5],+m[6]).getTime():0}
+function mediaKmL(placa){
+  const diesel=DADOS.gastos.filter(g=>upper(g.tipo).includes('DIESEL')&&upper(g.placa)===upper(placa))
+    .map(g=>({data:String(g.data),reg:g.registro||'',km:num(g.extras&&g.extras.KM),litros:num(g.extras&&g.extras.LITROS)}))
+    .filter(x=>x.km>0&&x.litros>0);
+  if(diesel.length<2)return null;
+  diesel.sort((a,b)=>a.data.localeCompare(b.data)||regTs(a.reg)-regTs(b.reg));
+  let kmTot=0,litTot=0;
+  for(let i=1;i<diesel.length;i++){
+    const d=diesel[i].km-diesel[i-1].km;
+    if(d>0&&diesel[i].litros>0){kmTot+=d;litTot+=diesel[i].litros}
+  }
+  return litTot>0?kmTot/litTot:null;
+}
+function renderKmL(){
+  const el=document.getElementById('porKmL');
+  const placas=[...new Set(DADOS.gastos.filter(g=>upper(g.tipo).includes('DIESEL')).map(g=>upper(g.placa)))];
+  if(!placas.length){el.innerHTML='<div class="vazio">Sem abastecimentos ainda</div>';return}
+  const rows=placas.map(p=>({p:p,m:mediaKmL(p),n:DADOS.gastos.filter(g=>upper(g.tipo).includes('DIESEL')&&upper(g.placa)===p).length}));
+  const max=Math.max.apply(null,rows.filter(r=>r.m).map(r=>r.m).concat([1]));
+  el.innerHTML=rows.map(r=>'<div style="margin-bottom:10px"><div style="display:flex;justify-content:space-between;font-size:13px"><span style="color:var(--branco)">'+esc(veicLabel(r.p))+'</span><span style="font-weight:700;color:var(--azul)">'+(r.m?r.m.toFixed(2)+' km/L':'—')+'</span></div><div style="background:#111;border-radius:6px;height:12px;margin-top:4px;overflow:hidden"><div style="width:'+(r.m?Math.min(100,r.m/max*100):0)+'%;height:100%;background:var(--azul2)"></div></div><div style="font-size:11px;color:#666;margin-top:2px">'+r.n+' abastecimento(s)</div></div>').join('');
 }
 function renderDiesel(gs){
   const el=document.getElementById('porDiesel');
@@ -620,7 +652,7 @@ function renderDiesel(gs){
     m[p].litros+=num(g.extras&&g.extras.LITROS);
     m[p].valor+=num(g.valor);
   });
-  el.innerHTML='<table><tr><th>Caminhão</th><th>Litros</th><th>R$ total</th><th>R$/L médio</th></tr>'+Object.keys(m).map(p=>'<tr><td>'+esc(veicLabel(p))+'</td><td>'+m[p].litros.toLocaleString('pt-BR',{maximumFractionDigits:0})+'</td><td>'+fmt(m[p].valor)+'</td><td>'+(m[p].litros?fmt(m[p].valor/m[p].litros):'—')+'</td></tr>').join('')+'</table>';
+  el.innerHTML='<table><tr><th>Caminhão</th><th>Litros</th><th>R$ total</th><th>R$/L médio</th><th>km/L</th></tr>'+Object.keys(m).map(p=>{const k=mediaKmL(p);return '<tr><td>'+esc(veicLabel(p))+'</td><td>'+m[p].litros.toLocaleString('pt-BR',{maximumFractionDigits:0})+'</td><td>'+fmt(m[p].valor)+'</td><td>'+(m[p].litros?fmt(m[p].valor/m[p].litros):'—')+'</td><td>'+(k?k.toFixed(2):'—')+'</td></tr>'}).join('')+'</table>';
 }
 function renderPorMes(){
   const el=document.getElementById('porMes');
@@ -659,6 +691,7 @@ window.addEventListener('load',async()=>{
   const q=new URLSearchParams(location.search).get('api');
   if(q){localStorage.setItem('tc_api',q);CFG.API=q;history.replaceState(null,'',location.pathname)}
   if(SESSAO)aplicarPermissoes();else mostrarLogin();
+  aplicarLogo(localStorage.getItem('tc_logo'));
   await carregarTudo();
   if(!CFG.API&&!sessionStorage.getItem('tc_perguntou')){
     sessionStorage.setItem('tc_perguntou','1');
