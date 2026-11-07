@@ -297,13 +297,32 @@ function upper(s){return String(s||'').trim().toUpperCase()}
 function num(v){const n=parseFloat(v);return isNaN(n)?0:n}
 let DADOS={gastos:[],recs:[],tiposG:[],tiposR:[],veics:[],mots:[]};
 let FOTO_B64=null,ENVIANDO=false;
-async function api(acao,payload){
+async function api(acao,payload,tentativa){
   if(!CFG.API)throw new Error('Backend não configurado: peça ao administrador para colar a URL do Apps Script (botão ⚙️ no topo).');
+  tentativa=tentativa||0;
   let body=Object.assign({acao:acao},payload);
   if(acao!=='login'&&SESSAO){body.usuario=SESSAO.usuario;body.senha=SESSAO.senha}
-  const r=await fetch(CFG.API,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(body)});
-  const j=await r.json();
-  if(j.ok===false)throw new Error(j.erro||'Erro no servidor');
+  let j;
+  try{
+    const r=await Promise.race([
+      fetch(CFG.API,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(body)}).then(function(r){return r.json()}),
+      new Promise(function(_,rej){setTimeout(function(){rej(new Error('Tempo limite: tente de novo'))},40000)})
+    ]);
+    j=r;
+  }catch(e){
+    if(tentativa<2&&/bloqueio|Tempo limite|ocupada|Failed to fetch/i.test(e.message)){
+      await new Promise(function(r){setTimeout(r,1500+tentativa*1500)});
+      return api(acao,payload,tentativa+1);
+    }
+    throw e;
+  }
+  if(j.ok===false){
+    if(tentativa<2&&/bloqueio|ocupada/i.test(j.erro||'')){
+      await new Promise(function(r){setTimeout(r,1500+tentativa*1500)});
+      return api(acao,payload,tentativa+1);
+    }
+    throw new Error(j.erro||'Erro no servidor');
+  }
   return j;
 }
 function aplicarLogo(l){
