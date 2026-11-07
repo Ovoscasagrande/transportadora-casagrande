@@ -1,7 +1,7 @@
 /* Service Worker — Transportadora Casagrande
    Cacheia o casco do app (abre instantâneo e funciona offline para a interface).
    Dados da planilha SEMPRE vêm da rede (sem cache). */
-const CACHE='tc-v1';
+const CACHE='tc-v2';
 const CASCO=['./index.html','./manifest.json','./icon-192.png','./icon-512.png'];
 
 self.addEventListener('install',e=>{
